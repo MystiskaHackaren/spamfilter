@@ -42,12 +42,7 @@
             text-align: center;
         }
 
-        h1 {
-            font-size: 2.6rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
+        h1 { font-size: 2.6rem; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .subtitle { font-size: 1.1rem; opacity: 0.9; }
 
         main { padding: 2.5rem 2rem; }
@@ -124,88 +119,3 @@
             padding: 0.6rem 1rem;
             border-radius: 30px;
             font-size: 0.95rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        #status {
-            text-align: center;
-            margin: 1.5rem 0;
-            color: var(--gray);
-            font-style: italic;
-        }
-
-        .icon-spin { animation: spin 1.5s linear infinite; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 2.1rem; }
-            main { padding: 2rem 1.2rem; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Världens bästa spamdetektor</h1>
-            <p class="subtitle">Powered by TensorFlow.js – Mystiska edition 🚀</p>
-        </header>
-
-        <main>
-            <textarea id="inputText" placeholder="Skriv in engelsk text här... (en mening eller mer)"></textarea>
-
-            <button id="predictBtn" disabled>
-                <i class="fas fa-shield-virus"></i> Kontrollera spam-sannolikhet
-            </button>
-
-            <div id="status">Laddar modell och vokabulär... <i class="fas fa-spinner icon-spin"></i></div>
-
-            <div id="result"></div>
-
-            <div id="tokens">
-                <h3>Använda tokens (ord → ID)</h3>
-                <ul id="tokenList"></ul>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        let model = null;
-        let wordIndex = null;
-        let indexToWord = { 0: '<PAD>' };
-        let oovToken = 1;
-
-        const statusEl = document.getElementById('status');
-        const predictBtn = document.getElementById('predictBtn');
-        const resultEl = document.getElementById('result');
-        const tokenList = document.getElementById('tokenList');
-
-        async function loadModelAndVocab() {
-            try {
-                model = await tf.loadLayersModel('tfjs_model/model.json');
-                const metaResp = await fetch('tfjs_model/metadata.json');
-                if (!metaResp.ok) throw new Error('metadata.json hittades inte');
-                const meta = await metaResp.json();
-                wordIndex = meta.wordIndex || meta.config.word_index;
-
-                // Hitta OOV/UNK-token och bygg omvänd lookup
-                for (const [word, idx] of Object.entries(wordIndex)) {
-                    indexToWord[idx] = word;
-                    if (/unk|oov/i.test(word)) {
-                        oovToken = Number(idx);
-                        indexToWord[idx] = '<UNK>';
-                    }
-                }
-
-                statusEl.innerHTML = 'Redo! Skriv text och testa →';
-                predictBtn.disabled = false;
-            } catch (err) {
-                statusEl.innerHTML = `Fel vid laddning: ${err.message}<br>Kontrollera att tfjs_model/model.json och metadata.json finns.`;
-                console.error(err);
-            }
-        }
-
-        predictBtn.addEventListener('click', async () => {
-            const text = document.getElementById('inputText').value.trim();
-            if (!text) {
-                resultEl.innerHTML = '<span style="color:#e67e22;">Skriv lite
