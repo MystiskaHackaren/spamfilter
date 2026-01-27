@@ -1,121 +1,293 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Världens bästa spamdetektor – Mystiska</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #6c5ce7;
-            --primary-dark: #5a4bc7;
-            --success: #00b894;
-            --danger: #e74c3c;
-            --light: #f5f6fa;
-            --dark: #2d3436;
-            --gray: #636e72;
-        }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Världens bästa SMS-Spamfilter – Mystiska edition</title>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
-            color: var(--dark);
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-            overflow: hidden;
-        }
+  <style>
+    :root {
+      --bg: #f8f9ff;
+      --card: #ffffff;
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
 
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-        }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(to bottom, #f3e8ff, var(--bg));
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-        h1 { font-size: 2.6rem; margin-bottom: 0.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .subtitle { font-size: 1.1rem; opacity: 0.9; }
+    header {
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
+      color: white;
+      text-align: center;
+      padding: 3.5rem 1rem 2.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
 
-        main { padding: 2.5rem 2rem; }
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
 
-        textarea {
-            width: 100%;
-            min-height: 140px;
-            padding: 1.2rem;
-            font-size: 1.1rem;
-            border: 2px solid #dfe6e9;
-            border-radius: 12px;
-            resize: vertical;
-            transition: all 0.3s;
-            margin: 1.5rem 0 1rem;
-        }
+    header p { font-size: 1.15rem; opacity: 0.92; }
 
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(108,92,231,0.2);
-        }
+    main {
+      max-width: 960px;
+      margin: -4rem auto 3rem;
+      padding: 0 1rem;
+    }
 
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem 2.2rem;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin: 0 auto;
-            box-shadow: 0 6px 20px rgba(108,92,231,0.35);
-        }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.8rem;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+    }
 
-        button:hover { transform: translateY(-3px); background: var(--primary-dark); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    h2 { color: var(--primary-dark); margin-bottom: 1rem; }
 
-        #result {
-            margin: 2.5rem 0;
-            padding: 1.8rem;
-            border-radius: 16px;
-            background: #f8f9fa;
-            text-align: center;
-            font-size: 1.4rem;
-            font-weight: bold;
-            transition: all 0.4s;
-        }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 1rem;
+      font-size: 1.05rem;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      resize: vertical;
+      transition: 0.2s;
+    }
 
-        .spam { background: #ffebee; color: var(--danger); }
-        .not-spam { background: #e8f5e9; color: var(--success); }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.15);
+    }
 
-        #tokens {
-            margin-top: 2rem;
-            background: #f1f2f6;
-            padding: 1.5rem;
-            border-radius: 12px;
-        }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1.2rem 0;
+      align-items: center;
+    }
 
-        #tokens h3 { margin-bottom: 1rem; color: var(--primary); }
+    button {
+      padding: 0.9rem 1.8rem;
+      font-size: 1.05rem;
+      border-radius: 999px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-        #tokens ul {
-            list-style: none;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-        }
+    button:hover:not(:disabled) {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
 
-        #tokens li {
-            background: white;
-            padding: 0.6rem 1rem;
-            border-radius: 30px;
-            font-size: 0.95rem;
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    #status { color: var(--muted); font-style: italic; }
+
+    #result {
+      margin-top: 1.5rem;
+      padding: 1.4rem;
+      border-radius: 12px;
+      font-family: ui-monospace, monospace;
+      background: #f9fafb;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .spam { background: #fee2e2; color: var(--danger); border-left: 6px solid var(--danger); }
+    .ham  { background: #ecfdf5; color: var(--success); border-left: 6px solid var(--success); }
+
+    .tokens {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+
+    .tokens strong { color: var(--primary-dark); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #6b7280;
+      font-size: 0.95rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌍 Världens bästa SMS-Spamfilter</h1>
+  <p>TensorFlow.js • Körs helt i webbläsaren • Mystiska edition 🚀</p>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Testa ett engelskt SMS</h2>
+    <p>Skriv in ett meddelande på engelska (modellen är tränad på engelska SMS).</p>
+
+    <textarea id="input" placeholder="Exempel: WINNER! You are selected for a FREE iPhone! Click here to claim now..."></textarea>
+
+    <div class="controls">
+      <button id="btnPredict" disabled>
+        <i class="fas fa-bolt"></i> Analysera med världens bästa detektor
+      </button>
+      <span id="status">Laddar modell och vokabulär…</span>
+    </div>
+
+    <div id="result">Väntar på analys…</div>
+
+    <div class="tokens">
+      <strong>Använda tokens:</strong><br>
+      <span id="tokensOutput">—</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Skapad med ❤️ av Mystiska • Baserad på TensorFlow.js • 2026 edition
+</footer>
+
+<script>
+let model = null;
+let wordIndex = null;
+let maxLen = 30;       // fallback – uppdateras från modellen
+let oovToken = 1;      // vanlig standard för <OOV>
+
+const MODEL_PATH = "./tfjs_model/model.json";
+const META_PATH  = "./tfjs_model/metadata.json";
+
+const btnPredict   = document.getElementById("btnPredict");
+const inputEl      = document.getElementById("input");
+const resultEl     = document.getElementById("result");
+const statusEl     = document.getElementById("status");
+const tokensOutput = document.getElementById("tokensOutput");
+
+async function loadModelAndMetadata() {
+  try {
+    statusEl.textContent = "Laddar modell…";
+
+    // Ladda metadata först (billigare än modell)
+    const metaRes = await fetch(META_PATH + "?v=" + Date.now());
+    if (!metaRes.ok) throw new Error(`metadata.json: ${metaRes.status}`);
+    const meta = await metaRes.json();
+    wordIndex = meta.word_index || meta.wordIndex;
+    if (!wordIndex) throw new Error("Ingen word_index hittad i metadata");
+
+    // Ladda modell
+    model = await tf.loadLayersModel(MODEL_PATH + "?v=" + Date.now());
+    maxLen = model.inputs[0].shape[1] ?? 30;
+
+    // Hitta OOV-token om det heter något annat
+    oovToken = wordIndex["<OOV>"] ?? wordIndex["<unk>"] ?? wordIndex["unk"] ?? 1;
+
+    // Värm upp modellen (första prediktionen är långsammare)
+    const dummy = tf.zeros([1, maxLen], "int32");
+    model.predict(dummy).dispose();
+    dummy.dispose();
+
+    statusEl.textContent = "Världens bästa detektor redo! 🎉";
+    btnPredict.disabled = false;
+  } catch (err) {
+    console.error(err);
+    statusEl.innerHTML = `<span style="color:var(--danger)">Fel: ${err.message}</span>`;
+    resultEl.innerHTML = "Kunde inte ladda modellen. Kontrollera att tfjs_model/ finns på servern.";
+  }
+}
+
+function cleanAndTokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^\w\s']/g, " ")     // behåll bara bokstäver, siffror, space, '
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ");
+}
+
+function textToSequence(text) {
+  const tokens = cleanAndTokenize(text);
+  const seq = new Array(maxLen).fill(0);
+
+  // Fyll från slutet (senaste orden viktigast för många spam-modeller)
+  const startIdx = Math.max(0, maxLen - tokens.length);
+  for (let i = 0; i < tokens.length && startIdx + i < maxLen; i++) {
+    seq[startIdx + i] = wordIndex[tokens[i]] ?? oovToken;
+  }
+
+  return seq;
+}
+
+btnPredict.onclick = async () => {
+  const text = inputEl.value.trim();
+  if (!text) {
+    resultEl.textContent = "Skriv något först!";
+    return;
+  }
+
+  resultEl.textContent = "Analyserar…";
+  tokensOutput.textContent = "…";
+
+  try {
+    const seq = textToSequence(text);
+    const tensor = tf.tensor2d([seq], [1, maxLen], "int32");
+    const pred = model.predict(tensor);
+    const prob = (await pred.data())[0];
+
+    tensor.dispose();
+    pred.dispose();
+
+    const isSpam = prob >= 0.5;
+    resultEl.className = isSpam ? "result spam" : "result ham";
+    resultEl.innerHTML = `
+Spam-sannolikhet: <strong>${(prob * 100).toFixed(1)} %</strong>
+Klass: ${isSpam ? "SPAM ⚠️" : "HAM ✅"}
+
+Originaltext: "${text.slice(0,120)}${text.length>120?"…":""}"
+    `;
+
+    // Visa tokens snyggt
+    const usedTokens = [];
+    seq.forEach((id, i) => {
+      if (id !== 0) {
+        const word = Object.keys(wordIndex).find(k => wordIndex[k] === id) || `?${id}`;
+        usedTokens.push(`${word} → ${id}`);
+      }
+    });
+    tokensOutput.textContent = usedTokens.length ? usedTokens.join(" • ") : "Inga matchande ord";
+  } catch (err) {
+    resultEl.textContent = `Fel vid analys: ${err.message}`;
+  }
+};
+
+// Starta automatiskt
+loadModelAndMetadata();
+</script>
+</body>
+</html>
