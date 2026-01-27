@@ -1,35 +1,110 @@
-<script>
-  alert("JS laddas");
-</script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <title>Spam Detector – [DITT NAMN]</title>
+    <meta charset="utf-8">
+    <title>Groks Spamdetektor – Mystiska</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        textarea { width: 100%; padding: 12px; font-size: 16px; margin-top: 10px; }
+        button { margin-top: 15px; padding: 12px 24px; font-size: 16px; background: #3498db; color: white; border: none; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        #result { margin-top: 20px; font-size: 24px; font-weight: bold; }
+        #tokens { margin-top: 30px; }
+        #status { margin-top: 20px; color: #7f8c8d; }
+        ul { background: white; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Groks Spamdetektor</h1>
+    <p>Skriv in valfri engelsk text (en mening eller längre) och se vad modellen tycker.</p>
 
-  <!-- TensorFlow.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js"></script>
+    <textarea id="inputText" rows="6" placeholder="Enter English text here..."></textarea><br>
+    <button id="predictBtn">Kontrollera spam-sannolikhet</button>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      font-size: 16px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    .result {
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px solid #ccc;
-    }
-    .tokens {
-      font-family: m
+    <div id="result"></div>
+    <div id="tokens"></div>
+    <div id="status">Laddar modell och vocabulary...</div>
+
+    <script>
+        let model = null;
+        let wordIndex = null;
+        let indexToWord = { 0: '<PAD>' };
+        let oovToken = 1;   // fallback
+
+        async function init() {
+            const status = document.getElementById('status');
+            try {
+                status.textContent = 'Laddar modellen...';
+                model = await tf.loadLayersModel('tfjs_model/model.json');
+
+                status.textContent = 'Laddar vocabulary...';
+                const meta = await fetch('tfjs_model/metadata.json').then(r => r.json());
+                wordIndex = meta.wordIndex;
+
+                // Bygg omvänd lookup och hitta <unk>-token
+                for (const [word, idx] of Object.entries(wordIndex)) {
+                    indexToWord[idx] = word;
+                    if (word.includes('unk') || word === '<unk>' || word === 'unk' || word === '<oov>') {
+                        oovToken = idx;
+                        indexToWord[idx] = '<UNK>';
+                    }
+                }
+
+                status.textContent = 'Redo! Skriv en text och tryck på knappen.';
+                document.getElementById('predictBtn').disabled = false;
+            } catch (e) {
+                status.textContent = 'Fel: ' + e.message + '. Kontrollera att tfjs_model/metadata.json finns och är korrekt.';
+                console.error(e);
+            }
+        }
+
+        document.getElementById('predictBtn').addEventListener('click', async () => {
+            if (!model || !wordIndex) return;
+
+            const text = document.getElementById('inputText').value.trim();
+            if (!text) {
+                document.getElementById('result').textContent = 'Skriv något först!';
+                return;
+            }
+
+            // Tokenisering
+            const words = text.toLowerCase().match(/\b[a-z]+\b/g) || [];
+            let sequence = words.map(w => wordIndex[w] || oovToken);
+
+            // Max 30 tokens, behåll de sista 30 orden (vanligast för spam-modeller)
+            if (sequence.length > 30) sequence = sequence.slice(-30);
+            while (sequence.length < 30) sequence.push(0);
+
+            // Prediktion
+            const inputTensor = tf.tensor2d([sequence], [1, 30]);
+            const prediction = model.predict(inputTensor);
+            const prob = (await prediction.data())[0];
+            const percent = (prob * 100).toFixed(2);
+
+            document.getElementById('result').innerHTML =
+                `<strong>Sannolikhet för spam: ${percent}%</strong><br>` +
+                (prob > 0.5 ? '<span style="color:red;">→ Troligen spam</span>' : '<span style="color:green;">→ Troligen inte spam</span>');
+
+            // Visa använda tokens (exklusive padding)
+            let tokensHtml = '<h3>Använda tokens (ord → token-ID):</h3><ul>';
+            for (let i = 0; i < sequence.length; i++) {
+                const idx = sequence[i];
+                if (idx !== 0) {
+                    const word = indexToWord[idx] || `<UNKNOWN (${idx})`;
+                    tokensHtml += `<li><strong>${word}</strong> → ${idx}</li>`;
+                }
+            }
+            tokensHtml += '</ul>';
+            document.getElementById('tokens').innerHTML = tokensHtml;
+
+            inputTensor.dispose();
+            prediction.dispose();
+        });
+
+        // Starta laddning
+        init();
+    </script>
+</body>
+</html>
