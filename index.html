@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Världens bästa Spamdetektor – Mystiska</title>
+  <title>Världens bästa Spamdetektor – Mystiska Edition</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
     :root {
-      --bg: #0f0f1a;
-      --card: #1a1a2e;
-      --accent: #00f0ff;
-      --accent-dark: #00b8d9;
-      --text: #e0e0ff;
-      --muted: #a0a0cc;
-      --success: #00ff9d;
-      --danger: #ff4d4d;
+      --bg: #0a001f;
+      --card: #140033;
+      --accent: #ff00ff;
+      --accent-dark: #cc00cc;
+      --text: #f0e6ff;
+      --muted: #b3a0ff;
+      --success: #00ff88;
+      --danger: #ff3366;
+      --border: #6600cc;
     }
 
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -31,7 +32,7 @@
     }
 
     .container {
-      max-width: 700px;
+      max-width: 720px;
       margin: 0 auto;
     }
 
@@ -41,183 +42,198 @@
     }
 
     h1 {
-      font-size: 2.8rem;
-      background: linear-gradient(90deg, var(--accent), #ff00aa);
+      font-size: 2.9rem;
+      background: linear-gradient(90deg, var(--accent), #00ffff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
     }
 
-    header p { color: var(--muted); font-size: 1.1rem; }
+    header p { color: var(--muted); font-size: 1.15rem; }
 
     .card {
       background: var(--card);
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 30px rgba(0,240,255,0.1);
-      border: 1px solid rgba(0,240,255,0.15);
+      border-radius: 20px;
+      padding: 2.2rem;
+      margin-bottom: 2.2rem;
+      box-shadow: 0 15px 40px rgba(255,0,255,0.08);
+      border: 1px solid var(--border);
     }
 
     .card h2 {
       color: var(--accent);
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
     }
 
     button {
       background: var(--accent);
       color: #000;
       border: none;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
+      padding: 1.1rem 2.4rem;
+      font-size: 1.15rem;
       font-weight: bold;
       border-radius: 50px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       gap: 0.8rem;
+      box-shadow: 0 5px 15px rgba(255,0,255,0.3);
     }
 
     button:hover:not(:disabled) {
       background: var(--accent-dark);
-      transform: scale(1.05);
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 10px 25px rgba(255,0,255,0.4);
     }
 
     button:disabled {
       background: #444;
       color: #888;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     textarea {
       width: 100%;
-      min-height: 120px;
-      padding: 1rem;
-      background: #222244;
+      min-height: 130px;
+      padding: 1.2rem;
+      background: #1a0033;
       color: var(--text);
-      border: 1px solid #333366;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      margin: 1rem 0;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-size: 1.1rem;
+      margin: 1.2rem 0;
       resize: vertical;
+      transition: all 0.3s;
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,240,255,0.3);
+      box-shadow: 0 0 0 4px rgba(255,0,255,0.25);
     }
 
     .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 1.2rem;
       align-items: center;
-      margin: 1.5rem 0;
+      margin: 1.6rem 0;
     }
 
     #status {
       color: var(--muted);
       font-style: italic;
-      flex: 1;
+      flex: 1 1 auto;
     }
 
     #result {
-      margin-top: 1.5rem;
-      padding: 1.5rem;
-      border-radius: 12px;
-      background: rgba(0,0,0,0.4);
+      margin-top: 1.8rem;
+      padding: 1.6rem;
+      border-radius: 14px;
+      background: rgba(20,0,51,0.6);
       font-family: monospace;
       white-space: pre-wrap;
-      transition: all 0.4s;
-      min-height: 100px;
+      transition: all 0.4s ease;
+      min-height: 120px;
+      line-height: 1.5;
     }
 
-    #result.spam { background: rgba(255,77,77,0.2); border-left: 6px solid var(--danger); }
-    #result.ham  { background: rgba(0,255,157,0.2); border-left: 6px solid var(--success); }
+    #result.spam { background: rgba(255,51,102,0.25); border-left: 6px solid var(--danger); }
+    #result.ham  { background: rgba(0,255,136,0.25); border-left: 6px solid var(--success); }
 
     .tokens {
-      margin-top: 1rem;
+      margin-top: 1.4rem;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
+
+    .tokens strong { color: var(--accent); }
 
     footer {
       text-align: center;
-      margin-top: 3rem;
+      margin-top: 4rem;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
 
     .spinner {
       animation: spin 1s linear infinite;
       display: inline-block;
-      margin-left: 0.5rem;
+      margin-left: 0.6rem;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2.4rem; }
+      .controls { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>🌌 Världens bästa Spamdetektor</h1>
-      <p>TensorFlow.js – Mystiska edition • Körs lokalt i din webbläsare</p>
+      <p>TensorFlow.js • Mystiska Edition • Körs helt lokalt i webbläsaren</p>
     </header>
 
     <div class="card">
-      <h2>Steg 1: Ladda modellen</h2>
-      <p>Modellen laddas en gång – ingen data lämnar din enhet.</p>
+      <h2>Steg 1 – Ladda modellen</h2>
+      <p>Laddar modellen och vokabulären från tfjs_model/. Ingen data skickas iväg.</p>
       <div class="controls">
         <button id="btnLoad">
-          <i class="fas fa-brain"></i> Ladda modell
+          <i class="fas fa-rocket"></i> Ladda modell nu
         </button>
-        <span id="status">Status: Väntar...</span>
+        <span id="status">Status: Väntar på laddning...</span>
       </div>
     </div>
 
     <div class="card">
-      <h2>Steg 2: Testa ett engelskt meddelande</h2>
-      <p>Modellen är tränad på engelska SMS. Skriv här:</p>
+      <h2>Steg 2 – Testa ett engelskt meddelande</h2>
+      <p>Skriv in ett SMS på engelska (t.ex. "WIN free prize now!"). Modellen är tränad på engelska SMS.</p>
 
-      <textarea id="input" placeholder="Ex: FREE entry to win £1000 cash! Text WIN to 12345 now!"></textarea>
+      <textarea id="input" placeholder="Exempel: Congratulations! Claim your FREE £1000 prize now! Text WIN to 12345"></textarea>
 
       <div class="controls">
         <button id="btnPredict" disabled>
-          <i class="fas fa-shield-alt"></i> Klassificera
+          <i class="fas fa-magic"></i> Analysera med världens bästa detektor
         </button>
       </div>
 
-      <div id="result">Väntar på modell och input...</div>
+      <div id="result">Väntar på modell och ditt meddelande...</div>
+
       <div class="tokens">
-        <strong>Tokens:</strong> <span id="tokensOutput">—</span>
+        <strong>Använda tokens (ord → ID):</strong><br>
+        <span id="tokensOutput">—</span>
       </div>
     </div>
 
     <footer>
-      Skapad av Mystiska • Baserad på Ivars ML-struktur • 2026
+      Skapad av Mystiska • Baserad på din spam-modell • Uppdaterad 2026
     </footer>
   </div>
 
   <script>
     let model = null;
     let wordIndex = null;
-    let maxLen = 30;  // fallback
-    let oovIndex = 1;
+    let maxLen = 30;
+    let oovToken = 1;
 
     const MODEL_PATH = "./tfjs_model/model.json";
     const META_PATH  = "./tfjs_model/metadata.json";
 
-    const btnLoad    = document.getElementById("btnLoad");
-    const btnPredict = document.getElementById("btnPredict");
-    const inputEl    = document.getElementById("input");
-    const statusEl   = document.getElementById("status");
-    const resultEl   = document.getElementById("result");
-    const tokensEl   = document.getElementById("tokensOutput");
+    const btnLoad     = document.getElementById("btnLoad");
+    const btnPredict  = document.getElementById("btnPredict");
+    const inputEl     = document.getElementById("input");
+    const statusEl    = document.getElementById("status");
+    const resultEl    = document.getElementById("result");
+    const tokensEl    = document.getElementById("tokensOutput");
 
-    function cleanText(s) {
-      return s.toLowerCase()
+    function cleanText(text) {
+      return text.toLowerCase()
         .replace(/[’]/g, "'")
         .replace(/[^a-z0-9\s']/g, " ")
         .replace(/\s+/g, " ")
@@ -227,31 +243,44 @@
     function textToSequence(text) {
       const tokens = cleanText(text).split(" ");
       const seq = new Array(maxLen).fill(0);
-      for (let i = 0; i < Math.min(tokens.length, maxLen); i++) {
-        seq[i] = wordIndex[tokens[i]] ?? oovIndex;
+
+      // Post-padding (fyll i slutet enligt metadata.json: "padding_type": "post")
+      const len = Math.min(tokens.length, maxLen);
+      for (let i = 0; i < len; i++) {
+        seq[i] = wordIndex[tokens[i]] ?? oovToken;
       }
+      // Resten är redan 0 (padding)
+
       return seq;
     }
 
     btnLoad.onclick = async () => {
-      statusEl.innerHTML = "Laddar modell... <i class='fas fa-spinner spinner'></i>";
+      statusEl.innerHTML = "Laddar modell och vokabulär... <i class='fas fa-spinner spinner'></i>";
       try {
-        const meta = await fetch(META_PATH + "?v=" + Date.now()).then(r => r.json());
+        // Ladda metadata först
+        const metaRes = await fetch(META_PATH + "?v=" + Date.now());
+        if (!metaRes.ok) throw new Error(`metadata.json: HTTP ${metaRes.status}`);
+        const meta = await metaRes.json();
         wordIndex = meta.word_index;
+        if (!wordIndex) throw new Error("Ingen word_index i metadata.json");
 
+        oovToken = wordIndex["<OOV>"] ?? 1;
+        maxLen = meta.max_length ?? 30;
+
+        // Ladda modellen (med cache-busting)
         model = await tf.loadLayersModel(MODEL_PATH + "?v=" + Date.now());
-        maxLen = model.inputs[0].shape[1];
+        console.log("Modell laddad – input shape:", model.inputs[0].shape);
 
-        oovIndex = wordIndex["<OOV>"] ?? 1;
+        // Warm-up för snabbare första prediktion
+        const dummy = tf.zeros([1, maxLen], "int32");
+        model.predict(dummy).dispose();
+        dummy.dispose();
 
-        // Warm-up
-        model.predict(tf.zeros([1, maxLen], "int32")).dispose();
-
-        statusEl.textContent = "Modell laddad! ✅";
+        statusEl.textContent = "Modell redo! 🚀";
         btnPredict.disabled = false;
-      } catch (e) {
-        statusEl.innerHTML = `Fel: ${e.message} <br><small>Kontrollera model.json (batch_input_shape) och metadata.json</small>`;
-        console.error(e);
+      } catch (err) {
+        console.error("Laddningsfel:", err);
+        statusEl.innerHTML = `Fel: ${err.message}<br><small>Vanlig fix: Ändra "batch_shape" → "batch_input_shape" i tfjs_model/model.json (InputLayer). Spara, commit och hard-refresh (Ctrl+F5).</small>`;
       }
     };
 
@@ -265,24 +294,37 @@
       resultEl.innerHTML = "Analyserar... <i class='fas fa-spinner spinner'></i>";
       tokensEl.textContent = "...";
 
-      const seq = textToSequence(text);
-      const x = tf.tensor2d([seq], [1, maxLen], "int32");
-      const y = model.predict(x);
-      const prob = (await y.data())[0];
+      try {
+        const seq = textToSequence(text);
+        const tensor = tf.tensor2d([seq], [1, maxLen], "int32");
+        const pred = model.predict(tensor);
+        const prob = (await pred.data())[0];
 
-      x.dispose();
-      y.dispose();
+        tensor.dispose();
+        pred.dispose();
 
-      const isSpam = prob >= 0.5;
-      resultEl.className = isSpam ? "result spam" : "result ham";
-      resultEl.innerHTML = `
-Klass: ${isSpam ? "SPAM" : "HAM"}
+        const isSpam = prob >= 0.5;
+        resultEl.className = isSpam ? "result spam" : "result ham";
+        resultEl.innerHTML = `
+Klass: ${isSpam ? "SPAM ⚠️" : "HAM ✅"}
 Spam-sannolikhet: ${(prob * 100).toFixed(1)} %
 
-Tokens: [${seq.join(", ")}]
-      `;
+Originaltext: "${text.slice(0, 120)}${text.length > 120 ? "..." : ""}"
+        `;
 
-      tokensEl.textContent = seq.filter(id => id !== 0).join(" → ") || "Inga giltiga tokens";
+        // Visa tokens snyggt (ord → ID, exklusive padding)
+        const usedTokens = [];
+        seq.forEach((id, idx) => {
+          if (id !== 0) {
+            const word = Object.keys(wordIndex).find(k => wordIndex[k] === id) || `?(${id})`;
+            usedTokens.push(`${word} → ${id}`);
+          }
+        });
+        tokensEl.textContent = usedTokens.length ? usedTokens.join(" • ") : "Inga giltiga ord hittades";
+      } catch (err) {
+        resultEl.textContent = `Analysfel: ${err.message}`;
+        console.error(err);
+      }
     };
   </script>
 </body>
