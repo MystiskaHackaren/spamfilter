@@ -1,585 +1,293 @@
 <!DOCTYPE html>
-
 <html lang="sv">
-
 <head>
-
   <meta charset="utf-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Världens bästa SMS-Spamfilter – Mystiska edition</title>
 
-  <title>Ivar – SMS-Spamfilter (TensorFlow.js)</title>
-
- 
-
-  <script src=https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js></script>
-
- 
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
-
     :root {
-
-      --bg: #f5f7fb;
-
+      --bg: #f8f9ff;
       --card: #ffffff;
-
-      --primary: #2563eb;
-
-      --primary-dark: #1e40af;
-
-      --muted: #64748b;
-
-      --text: #0f172a;
-
-      --success: #16a34a;
-
-      --danger: #dc2626;
-
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
     }
 
- 
-
-    * { box-sizing: border-box; }
-
- 
-
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-
-      margin: 0;
-
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-
-      background: var(--bg);
-
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(to bottom, #f3e8ff, var(--bg));
       color: var(--text);
-
       line-height: 1.6;
-
+      min-height: 100vh;
     }
-
- 
-
-    /* ───────── Header / Hero ───────── */
 
     header {
-
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
-
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
       color: white;
-
-      padding: 3rem 1.2rem;
-
       text-align: center;
-
+      padding: 3.5rem 1rem 2.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
 
- 
-
-    header h1 {
-
-      margin: 0;
-
-      font-size: 2.6rem;
-
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 0.4rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
- 
-
-    header p {
-
-      margin-top: 0.7rem;
-
-      opacity: 0.9;
-
-      font-size: 1.1rem;
-
-    }
-
- 
-
-    /* ───────── Main layout ───────── */
+    header p { font-size: 1.15rem; opacity: 0.92; }
 
     main {
-
-      max-width: 980px;
-
-      margin: auto;
-
-      padding: 2rem 1.2rem 3rem;
-
+      max-width: 960px;
+      margin: -4rem auto 3rem;
+      padding: 0 1rem;
     }
-
- 
-
-    .hero-images {
-
-      display: grid;
-
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-
-      gap: 1rem;
-
-      margin-top: -3rem;
-
-      margin-bottom: 2.5rem;
-
-    }
-
- 
-
-    .hero-images img {
-
-      width: 100%;
-
-      height: 200px;
-
-      object-fit: cover;
-
-      border-radius: 18px;
-
-      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
-
-    }
-
- 
-
-    /* ───────── Cards ───────── */
 
     .card {
-
       background: var(--card);
-
-      border-radius: 18px;
-
-      padding: 1.8rem;
-
-      margin-bottom: 1.6rem;
-
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.8rem;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
     }
 
- 
-
-    .card h2 {
-
-      margin-top: 0;
-
-      font-size: 1.5rem;
-
-    }
-
- 
-
-    .step {
-
-      display: flex;
-
-      gap: 14px;
-
-      align-items: flex-start;
-
-    }
-
- 
-
-    .step-number {
-
-      background: var(--primary);
-
-      color: white;
-
-      width: 34px;
-
-      height: 34px;
-
-      border-radius: 50%;
-
-      display: grid;
-
-      place-items: center;
-
-      font-weight: 700;
-
-      flex-shrink: 0;
-
-    }
-
- 
-
-    /* ───────── Inputs ───────── */
+    h2 { color: var(--primary-dark); margin-bottom: 1rem; }
 
     textarea {
-
       width: 100%;
-
-      min-height: 130px;
-
-      padding: 14px 16px;
-
-      font-size: 16px;
-
-      border-radius: 14px;
-
-      border: 2px solid #c7d2fe;
-
-      margin-top: 1rem;
-
+      min-height: 140px;
+      padding: 1rem;
+      font-size: 1.05rem;
+      border: 2px solid var(--border);
+      border-radius: 12px;
       resize: vertical;
-
-      font-family: inherit;
-
+      transition: 0.2s;
     }
-
- 
 
     textarea:focus {
-
       outline: none;
-
       border-color: var(--primary);
-
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.15);
     }
 
- 
+    .controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1.2rem 0;
+      align-items: center;
+    }
 
     button {
-
-      margin-top: 1rem;
-
-      padding: 12px 22px;
-
-      font-size: 16px;
-
+      padding: 0.9rem 1.8rem;
+      font-size: 1.05rem;
       border-radius: 999px;
-
       border: none;
-
-      cursor: pointer;
-
       background: var(--primary);
-
       color: white;
-
       font-weight: 600;
-
-      transition: 0.2s;
-
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-
- 
 
     button:hover:not(:disabled) {
-
       background: var(--primary-dark);
-
-      transform: translateY(-1px);
-
+      transform: translateY(-2px);
     }
 
- 
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    button:disabled {
+    #status { color: var(--muted); font-style: italic; }
 
-      background: #94a3b8;
-
-      cursor: not-allowed;
-
-    }
-
- 
-
-    .status {
-
-      margin-left: 14px;
-
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-
-      font-size: 0.95rem;
-
-      color: var(--muted);
-
-    }
-
- 
-
-    /* ───────── Result ───────── */
-
-    .result {
-
-      background: #f8fafc;
-
-      border-radius: 14px;
-
+    #result {
+      margin-top: 1.5rem;
       padding: 1.4rem;
-
-      margin-top: 1rem;
-
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-
+      border-radius: 12px;
+      font-family: ui-monospace, monospace;
+      background: #f9fafb;
       white-space: pre-wrap;
-
+      line-height: 1.5;
     }
 
- 
+    .spam { background: #fee2e2; color: var(--danger); border-left: 6px solid var(--danger); }
+    .ham  { background: #ecfdf5; color: var(--success); border-left: 6px solid var(--success); }
 
-    /* ───────── Footer ───────── */
+    .tokens {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+
+    .tokens strong { color: var(--primary-dark); }
 
     footer {
-
-      background: #0f172a;
-
-      color: white;
-
       text-align: center;
-
-      padding: 1.4rem;
-
-      font-size: 0.9rem;
-
-      opacity: 0.9;
-
+      padding: 2rem 1rem;
+      color: #6b7280;
+      font-size: 0.95rem;
+      border-top: 1px solid var(--border);
     }
-
   </style>
-
 </head>
-
- 
-
 <body>
 
- 
-
 <header>
-
-  <h1>📩 Ivar’s SMS-Spamfilter</h1>
-
-  <p>Maskininlärning i webbläsaren med TensorFlow.js</p>
-
+  <h1>🌍 Världens bästa SMS-Spamfilter</h1>
+  <p>TensorFlow.js • Körs helt i webbläsaren • Mystiska edition 🚀</p>
 </header>
 
- 
-
 <main>
+  <div class="card">
+    <h2>Testa ett engelskt SMS</h2>
+    <p>Skriv in ett meddelande på engelska (modellen är tränad på engelska SMS).</p>
 
- 
+    <textarea id="input" placeholder="Exempel: WINNER! You are selected for a FREE iPhone! Click here to claim now..."></textarea>
 
-  <section class="hero-images">
-
-    <img src=https://images.unsplash.com/photo-1557200134-90327ee9fafa?w=900&auto=format&fit=crop&q=80>
-
-    <img src=https://images.unsplash.com/photo-1525182008055-f88b95ff7980?w=900&auto=format&fit=crop&q=80>
-
-    <img src=https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=900&auto=format&fit=crop&q=80>
-
-  </section>
-
- 
-
-  <div class="card step">
-
-    <div class="step-number">1</div>
-
-    <div>
-
-      <h2>Ladda modellen</h2>
-
-      <p>Modellen laddas lokalt i din webbläsare. Ingen data skickas iväg.</p>
-
-      <button id="btnLoad">Ladda modell</button>
-
-      <span id="status" class="status">Status: ej laddad</span>
-
+    <div class="controls">
+      <button id="btnPredict" disabled>
+        <i class="fas fa-bolt"></i> Analysera med världens bästa detektor
+      </button>
+      <span id="status">Laddar modell och vokabulär…</span>
     </div>
 
-  </div>
+    <div id="result">Väntar på analys…</div>
 
- 
-
-  <div class="card step">
-
-    <div class="step-number">2</div>
-
-    <div style="width:100%">
-
-      <h2>Testa ett engelskt SMS</h2>
-
-      <p>Modellen är tränad på engelska SMS-meddelanden.</p>
-
- 
-
-      <textarea id="input" placeholder="Ex: Congratulations! You have won a FREE prize. Reply WIN now!"></textarea>
-
- 
-
-      <button id="btnPredict" disabled>Klassificera SMS</button>
-
- 
-
-      <div id="out" class="result">Väntar på input…</div>
-
+    <div class="tokens">
+      <strong>Använda tokens:</strong><br>
+      <span id="tokensOutput">—</span>
     </div>
-
   </div>
-
- 
-
 </main>
 
- 
-
 <footer>
-
-  Skapad av Ivar • TensorFlow.js • Körs helt lokalt i webbläsaren
-
+  Skapad med ❤️ av Mystiska • Baserad på TensorFlow.js • 2026 edition
 </footer>
 
- 
-
-<!-- 🔒 ML-KODEN ÄR OÄNDRAD -->
-
 <script>
-
 let model = null;
-
 let wordIndex = null;
-
- 
+let maxLen = 30;       // fallback – uppdateras från modellen
+let oovToken = 1;      // vanlig standard för <OOV>
 
 const MODEL_PATH = "./tfjs_model/model.json";
-
 const META_PATH  = "./tfjs_model/metadata.json";
 
- 
+const btnPredict   = document.getElementById("btnPredict");
+const inputEl      = document.getElementById("input");
+const resultEl     = document.getElementById("result");
+const statusEl     = document.getElementById("status");
+const tokensOutput = document.getElementById("tokensOutput");
 
-const btnLoad = document.getElementById("btnLoad");
+async function loadModelAndMetadata() {
+  try {
+    statusEl.textContent = "Laddar modell…";
 
-const btnPredict = document.getElementById("btnPredict");
+    // Ladda metadata först (billigare än modell)
+    const metaRes = await fetch(META_PATH + "?v=" + Date.now());
+    if (!metaRes.ok) throw new Error(`metadata.json: ${metaRes.status}`);
+    const meta = await metaRes.json();
+    wordIndex = meta.word_index || meta.wordIndex || meta.config?.word_index;
+    if (!wordIndex) throw new Error("Ingen word_index hittad i metadata.json");
 
-const inputEl = document.getElementById("input");
+    // Ladda modell
+    model = await tf.loadLayersModel(MODEL_PATH + "?v=" + Date.now());
+    maxLen = model.inputs[0].shape?.[1] ?? 30;
 
-const outEl = document.getElementById("out");
+    // Hitta OOV-token (vanliga namn)
+    oovToken = wordIndex["<OOV>"] ?? wordIndex["<unk>"] ?? wordIndex["unk"] ?? wordIndex["<OOV>"] ?? 1;
 
-const statusEl = document.getElementById("status");
+    // Värm upp modellen
+    const dummy = tf.zeros([1, maxLen], "int32");
+    model.predict(dummy).dispose();
+    dummy.dispose();
 
- 
-
-function cleanText(s) {
-
-  return s.toLowerCase()
-
-    .replace(/[’]/g, "'")
-
-    .replace(/[^a-z0-9\s']/g, " ")
-
-    .replace(/\s+/g, " ")
-
-    .trim();
-
+    statusEl.textContent = "Världens bästa detektor redo! 🎉";
+    btnPredict.disabled = false;
+  } catch (err) {
+    console.error("Laddningsfel:", err);
+    statusEl.innerHTML = `Fel: ${err.message}<br><small>Kontrollera att tfjs_model/model.json har "batch_input_shape" istället för "batch_shape"</small>`;
+    resultEl.innerHTML = "Kunde inte ladda modellen. Öppna konsolen (F12) för mer info.";
+  }
 }
 
- 
+function cleanAndTokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^\w\s']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ");
+}
 
-function textToSequence(text, maxLen, oovIndex) {
-
-  const tokens = cleanText(text).split(" ");
-
+function textToSequence(text) {
+  const tokens = cleanAndTokenize(text);
   const seq = new Array(maxLen).fill(0);
 
-  for (let i = 0; i < Math.min(tokens.length, maxLen); i++) {
-
-    seq[i] = wordIndex[tokens[i]] ?? oovIndex;
-
+  // Fyll från slutet (vanligast för textklassificering)
+  const start = Math.max(0, maxLen - tokens.length);
+  for (let i = 0; i < tokens.length && start + i < maxLen; i++) {
+    seq[start + i] = wordIndex[tokens[i]] ?? oovToken;
   }
 
   return seq;
-
 }
 
- 
-
-btnLoad.onclick = async () => {
-
-  try {
-
-    statusEl.textContent = "laddar modell…";
-
-    const meta = await fetch(META_PATH).then(r => r.json());
-
-    wordIndex = meta.word_index;
-
- 
-
-    model = await tf.loadLayersModel(MODEL_PATH + "?v=" + Date.now());
-
-    const maxLen = model.inputs[0].shape[1];
-
- 
-
-    model._maxLen = maxLen;
-
-    model._oov = wordIndex["<OOV>"] ?? 1;
-
- 
-
-    model.predict(tf.zeros([1, maxLen], "int32")).dispose();
-
- 
-
-    btnPredict.disabled = false;
-
-    statusEl.textContent = "modell laddad ✅";
-
-  } catch (e) {
-
-    statusEl.textContent = "fel vid laddning ❌";
-
-    outEl.textContent = e.message;
-
+btnPredict.onclick = async () => {
+  const text = inputEl.value.trim();
+  if (!text) {
+    resultEl.textContent = "Skriv något först!";
+    return;
   }
 
+  resultEl.textContent = "Analyserar…";
+  tokensOutput.textContent = "…";
+
+  try {
+    const seq = textToSequence(text);
+    const tensor = tf.tensor2d([seq], [1, maxLen], "int32");
+    const pred = model.predict(tensor);
+    const prob = (await pred.data())[0];
+
+    tensor.dispose();
+    pred.dispose();
+
+    const isSpam = prob >= 0.5;
+    resultEl.className = isSpam ? "result spam" : "result ham";
+    resultEl.innerHTML = `
+Spam-sannolikhet: <strong>${(prob * 100).toFixed(1)} %</strong>
+Klass: ${isSpam ? "SPAM ⚠️" : "HAM ✅"}
+
+Original: "${text.slice(0,100)}${text.length > 100 ? "…" : ""}"
+    `;
+
+    // Visa tokens
+    const used = [];
+    seq.forEach(id => {
+      if (id !== 0) {
+        const word = Object.keys(wordIndex).find(k => wordIndex[k] === id) || `?${id}`;
+        used.push(`${word} → ${id}`);
+      }
+    });
+    tokensOutput.textContent = used.length ? used.join(" • ") : "Inga matchande ord";
+  } catch (err) {
+    resultEl.textContent = `Analysfel: ${err.message}`;
+  }
 };
 
- 
-
-btnPredict.onclick = async () => {
-
-  const seq = textToSequence(inputEl.value, model._maxLen, model._oov);
-
-  const x = tf.tensor2d([seq], [1, model._maxLen], "int32");
-
-  const y = model.predict(x);
-
-  const prob = (await y.data())[0];
-
- 
-
-  x.dispose(); y.dispose();
-
- 
-
-  outEl.textContent =
-
-`Klass: ${prob >= 0.5 ? "SPAM" : "HAM"}
-
-Spam-sannolikhet: ${(prob * 100).toFixed(1)} %
-
- 
-
-Tokens:
-
-[${seq.join(", ")}]`;
-
-};
-
+// Starta automatiskt när sidan laddas
+loadModelAndMetadata();
 </script>
-
- 
-
 </body>
-
 </html>
