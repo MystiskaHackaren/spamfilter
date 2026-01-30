@@ -3,115 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spamfilter – Test</title>
+  <title>Spam / Ham - TF.js demo</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background: #f8f9fa; }
-    h1 { color: #333; }
-    textarea { width: 90%; max-width: 600px; height: 120px; padding: 12px; font-size: 16px; margin: 20px; }
-    button { padding: 14px 40px; font-size: 18px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    button:disabled { background: gray; }
-    #resultat { font-size: 24px; margin: 30px; padding: 15px; border-radius: 8px; background: #e9ecef; }
-    #debug { margin: 40px auto; max-width: 800px; border: 1px solid #ccc; padding: 15px; background: white; text-align: left; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    body {
+      font-family: -apple-system, BlinkMacOSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #222;
+    }
+    h1 { text-align: center; color: #1a3c5e; }
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+      box-sizing: border-box;
+      margin: 16px 0;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 17px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 0 auto;
+      display: block;
+    }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #result {
+      margin: 24px 0;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 18px;
+      min-height: 60px;
+      text-align: center;
+      background: white;
+      border: 1px solid #ddd;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #debug {
+      margin-top: 40px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .spam   { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+    .ham    { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .loading { background: #fff3cd; color: #856404; }
   </style>
 </head>
 <body>
 
-  <h1>Spam/Ham-detektering – Testläge</h1>
-  <p>Skriv ett meddelande och klicka. Om ingenting händer efter 5 sek → kolla debug + console.</p>
+<h1>Spam / Ham detektor</h1>
 
-  <textarea id="inputText" placeholder="Ex: Grattis du har vunnit! Klicka här för att hämta priset..."></textarea><br>
+<p>Skriv eller klistra in ett SMS / meddelande nedan:</p>
 
-  <button id="btn" onclick="predictSpam()">Klassificera</button>
+<textarea id="txt" placeholder="Exempel: 
+Grattis! Du har vunnit 1 000 000 kr! Klicka här för att hämta ditt pris →"></textarea>
 
-  <div id="resultat">Väntar...</div>
+<button id="btn">Klassificera</button>
 
-  <div id="debug"><strong>Debug:</strong><br></div>
+<div id="result">Väntar på text…</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<div id="debug">Debug-loggar:</div>
 
-  <script>
-    alert("JavaScript körs! (test-alert)");  // ← Ta bort denna rad senare om du vill
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 
-    const debug = document.getElementById('debug');
-    function log(msg, err = false) {
-      debug.innerHTML += (err ? '[FEL] ' : '') + msg + '<br>';
-      debug.scrollTop = debug.scrollHeight;
-    }
+<script>
+// ────────────────────────────────────────────────
+const MODEL_URL  = "https://raw.githubusercontent.com/mystiskahackaren/spamfilter/main/tfjs_model/model.json";
+const META_URL   = "https://raw.githubusercontent.com/mystiskahackaren/spamfilter/main/tfjs_model/metadata.json";
 
-    log("Sidan laddad – JS startade " + new Date().toLocaleTimeString());
+let model = null;
+let wordIndex = null;
+let maxLen = 30;
+let oovToken = 1;
+const labels = ["ham", "spam"];
 
-    const modelUrl = 'https://raw.githubusercontent.com/mystiskahackaren/spamfilter/main/tfjs_model/model.json';
-    const metaUrl  = 'https://raw.githubusercontent.com/mystiskahackaren/spamfilter/main/tfjs_model/metadata.json';
+const txt     = document.getElementById("txt");
+const btn     = document.getElementById("btn");
+const result  = document.getElementById("result");
+const debugEl = document.getElementById("debug");
 
-    let model = null;
-    let wordIndex = null;
-    let maxLen = 30;
-    let oov = 1;
-    const labels = ['ham', 'spam'];
+function log(...args) {
+  const line = args.join(" ");
+  debugEl.innerHTML += line + "\n";
+  debugEl.scrollTop = debugEl.scrollHeight;
+  console.log("[debug]", line);
+}
 
-    async function loadStuff() {
-      try {
-        log("Laddar metadata...");
-        const metaRes = await fetch(metaUrl);
-        if (!metaRes.ok) throw new Error("Metadata HTTP " + metaRes.status);
-        const meta = await metaRes.json();
-        wordIndex = meta.word_index;
-        maxLen = meta.max_length || 30;
-        if (meta.oov_token) oov = wordIndex[meta.oov_token] || 1;
-        log(`OK – vocab: ${Object.keys(wordIndex).length} ord, maxLen: ${maxLen}`);
+log("Sidan startad", new Date().toLocaleTimeString());
 
-        log("Laddar modell...");
-        model = await tf.loadLayersModel(modelUrl);
-        log("Modell laddad! Input: " + model.inputs[0].shape);
-      } catch (e) {
-        log("Laddningsfel: " + e.message, true);
-        console.error(e);
-      }
-    }
+// ────────────────────────────────────────────────
+async function loadMetadata() {
+  log("→ Laddar metadata...");
+  try {
+    const r = await fetch(META_URL);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    
+    wordIndex = data.word_index;
+    maxLen    = data.max_length ?? 30;
+    oovToken  = data.word_index?.[data.oov_token] ?? 1;
 
-    async function predictSpam() {
-      const text = document.getElementById('inputText').value.trim();
-      if (!text) return alert("Skriv något först!");
+    log(`  Vocab-storlek: ${Object.keys(wordIndex).length}`);
+    log(`  max_length: ${maxLen}`);
+    log(`  OOV-token: ${oovToken}`);
+  } catch (err) {
+    log("Metadata-fel:", err.message);
+    throw err;
+  }
+}
 
-      const btn = document.getElementById('btn');
-      btn.disabled = true;
-      document.getElementById('resultat').innerHTML = "Bearbetar...";
+// ────────────────────────────────────────────────
+async function loadModel() {
+  log("→ Laddar modell...");
+  try {
+    model = await tf.loadLayersModel(MODEL_URL);
+    log("  Modell laddad ✓");
+    log("  Input shape:", model.inputs[0].shape.join(", "));
+  } catch (err) {
+    log("Modell-fel:", err.message);
+    throw err;
+  }
+}
 
-      try {
-        if (!model || !wordIndex) await loadStuff();
+// ────────────────────────────────────────────────
+async function predict() {
+  const text = txt.value.trim();
+  if (!text) {
+    result.textContent = "Skriv något först…";
+    result.className = "";
+    return;
+  }
 
-        const tokens = text.toLowerCase()
-          .replace(/[^\w\s]/g, '')
-          .split(/\s+/)
-          .map(w => wordIndex[w] || oov)
-          .slice(0, maxLen);
+  btn.disabled = true;
+  result.textContent = "Bearbetar…";
+  result.className = "loading";
 
-        while (tokens.length < maxLen) tokens.push(0);
+  try {
+    if (!wordIndex) await loadMetadata();
+    if (!model)    await loadModel();
 
-        const input = tf.tensor2d([tokens], [1, maxLen]);
-        const out = model.predict(input);
-        const prob = (await out.data())[0];
-        const isSpam = prob > 0.5;
+    // enkel tokenisering + post-padding
+    const tokens = text.toLowerCase()
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .map(w => wordIndex[w] ?? oovToken)
+      .slice(0, maxLen);
 
-        let msg = isSpam ? '<span style="color:red">SPAM</span>' : '<span style="color:green">HAM</span>';
-        msg += ` (sannolikhet spam: ${(prob*100).toFixed(1)}%)`;
+    while (tokens.length < maxLen) tokens.push(0);
 
-        document.getElementById('resultat').innerHTML = msg;
-        log("Prediktion klar: " + msg.replace(/<[^>]+>/g, ''));
+    const input = tf.tensor2d([tokens], [1, maxLen]);
+    const out = model.predict(input);
+    const prob = (await out.data())[0];   // sigmoid → [0,1]
 
-        input.dispose(); out.dispose();
-      } catch (e) {
-        document.getElementById('resultat').innerHTML = "Fel – se debug";
-        log("Prediktionsfel: " + e.message, true);
-        console.error(e);
-      } finally {
-        btn.disabled = false;
-      }
-    }
+    const isSpam = prob > 0.5;
+    const label = isSpam ? "SPAM" : "HAM";
+    const pct = (prob * 100).toFixed(1);
 
-    // Kör en gång vid start
-    loadStuff().catch(e => log("Auto-laddning misslyckades: " + e.message, true));
-  </script>
+    result.innerHTML = `${label}<br><small>Spam-sannolikhet: ${pct} %</small>`;
+    result.className = isSpam ? "spam" : "ham";
+
+    input.dispose();
+    out.dispose();
+
+  } catch (err) {
+    result.textContent = "Fel – se debug-loggen nedan";
+    result.className = "";
+    log("PREDIKTIONSFEL:", err.message);
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ────────────────────────────────────────────────
+btn.addEventListener("click", predict);
+</script>
 
 </body>
 </html>
