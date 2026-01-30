@@ -1,87 +1,306 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spam / Ham - TF.js demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SPAM DETECTOR ネオ TOKYO 2099</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=VT323&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      font-family: -apple-system, BlinkMacOSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 20px;
-      background: #f9f9f9;
-      color: #222;
+    :root {
+      --neon-pink:   #ff00ea;
+      --neon-cyan:   #00f0ff;
+      --neon-purple: #9d00ff;
+      --dark-bg:     #0a0015;
+      --darker-bg:   #04000a;
+      --grid:        rgba(0, 240, 255, 0.07);
     }
-    h1 { text-align: center; color: #1a3c5e; }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0a0015 0%, #04000a 100%);
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 10% 20%, var(--grid) 2px, transparent 2px),
+        radial-gradient(circle at 90% 80%, var(--grid) 2px, transparent 2px);
+      background-size: 60px 60px;
+      position: relative;
+    }
+
+    .scanline {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        transparent 50%,
+        rgba(0,240,255,0.04) 50%,
+        rgba(0,240,255,0.04) 51%,
+        transparent 51%
+      );
+      background-size: 100% 4px;
+      animation: scan 8s linear infinite;
+      z-index: 9999;
+      opacity: 0.6;
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 8vw, 6.8rem);
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+      background-size: 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 30px rgba(255,0,234,0.7);
+      animation: glitch-text 4s infinite alternate, hue-rotate 12s infinite linear;
+    }
+
+    @keyframes glitch-text {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(-3px, 3px); }
+      40% { transform: translate(3px, -3px); }
+      60% { transform: translate(-2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+    }
+
+    @keyframes hue-rotate {
+      to { filter: hue-rotate(360deg); }
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      font-family: 'VT323', monospace;
+      font-size: 1.4rem;
+      color: var(--neon-cyan);
+      opacity: 0.85;
+      letter-spacing: 2px;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .card {
+      background: rgba(10, 0, 21, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0,240,255,0.18);
+      border-radius: 16px;
+      padding: 32px;
+      margin: 32px 0;
+      box-shadow:
+        0 0 40px rgba(0,240,255,0.12),
+        inset 0 0 20px rgba(255,0,234,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background: radial-gradient(circle at 30% 20%, rgba(255,0,234,0.12) 0%, transparent 60%);
+      pointer-events: none;
+      animation: pulse-glow 10s infinite alternate;
+    }
+
+    @keyframes pulse-glow {
+      0%   { opacity: 0.3; transform: scale(0.9); }
+      100% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    .card h2 {
+      font-size: 1.9rem;
+      margin-bottom: 1.2em;
+      color: var(--neon-pink);
+      text-shadow: 0 0 15px var(--neon-pink);
+      letter-spacing: 1px;
+    }
+
     textarea {
       width: 100%;
-      min-height: 110px;
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      min-height: 140px;
+      padding: 16px;
+      font-family: 'VT323', monospace;
+      font-size: 1.5rem;
+      background: rgba(4,0,10,0.7);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 10px;
+      color: var(--neon-cyan);
       resize: vertical;
-      box-sizing: border-box;
-      margin: 16px 0;
+      margin: 16px 0 24px;
+      box-shadow: inset 0 0 20px rgba(0,240,255,0.08);
+      transition: all 0.3s;
     }
-    button {
-      background: #28a745;
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 30px rgba(255,0,234,0.4);
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 18px 48px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
       color: white;
       border: none;
-      padding: 14px 32px;
-      font-size: 17px;
-      border-radius: 6px;
+      border-radius: 50px;
       cursor: pointer;
+      box-shadow: 0 0 40px rgba(255,0,234,0.5);
+      transition: all 0.4s;
       margin: 0 auto;
       display: block;
     }
-    button:disabled {
-      background: #aaa;
+
+    .btn:hover {
+      transform: scale(1.08) translateY(-4px);
+      box-shadow: 0 0 70px rgba(255,0,234,0.8);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      transform: none;
+      box-shadow: none;
       cursor: not-allowed;
     }
+
     #result {
-      margin: 24px 0;
-      padding: 16px;
-      border-radius: 8px;
-      font-size: 18px;
-      min-height: 60px;
+      margin: 32px 0;
+      padding: 24px;
+      font-size: 2.2rem;
+      font-weight: 900;
       text-align: center;
-      background: white;
-      border: 1px solid #ddd;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      min-height: 120px;
+      background: rgba(4,0,10,0.6);
+      border: 2px solid transparent;
+      transition: all 0.6s;
+      text-shadow: 0 0 20px currentColor;
     }
+
+    #result.spam   { border-color: #ff3366; color: #ff3366; background: rgba(255,51,102,0.12); }
+    #result.ham    { border-color: #00ff9d; color: #00ff9d; background: rgba(0,255,157,0.12); }
+    #result.loading{ border-color: var(--neon-cyan); color: var(--neon-cyan); }
+
     #debug {
-      margin-top: 40px;
-      padding: 12px;
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 6px;
-      font-family: Consolas, monospace;
-      font-size: 13px;
-      white-space: pre-wrap;
+      margin-top: 60px;
+      padding: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(0,240,255,0.2);
+      border-radius: 12px;
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      color: #00ff9d;
       max-height: 240px;
       overflow-y: auto;
+      line-height: 1.5;
     }
-    .spam   { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
-    .ham    { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-    .loading { background: #fff3cd; color: #856404; }
+
+    .glitch {
+      position: relative;
+    }
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0.8;
+    }
+    .glitch::before {
+      left: 2px;
+      text-shadow: -2px 0 #ff00ea;
+      animation: glitch-anim 3s infinite linear alternate-reverse;
+    }
+    .glitch::after {
+      left: -2px;
+      text-shadow: 2px 0 #00f0ff;
+      animation: glitch-anim2 2.4s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim {
+      0%   { clip: rect(0,9999px,0,0); transform: translate(0); }
+      5%   { clip: rect(20px,9999px,40px,0); transform: translate(-5px,2px); }
+      10%  { clip: rect(60px,9999px,80px,0); transform: translate(5px,-2px); }
+      /* ... många fler keyframes för glitch-effekt ... */
+      100% { clip: rect(0,9999px,0,0); transform: translate(0); }
+    }
+
+    @keyframes glitch-anim2 {
+      0%   { clip: rect(0,9999px,0,0); transform: translate(0); }
+      20%  { clip: rect(30px,9999px,50px,0); transform: translate(3px,-4px); }
+      /* kortare variant */
+    }
   </style>
 </head>
 <body>
 
-<h1>Spam / Ham detektor</h1>
+<div class="scanline"></div>
 
-<p>Skriv eller klistra in ett SMS / meddelande nedan:</p>
+<header>
+  <h1 class="glitch" data-text="SPAM DETECTOR ネオ TOKYO">SPAM DETECTOR ネオ TOKYO</h1>
+  <div class="subtitle">TensorFlow.js • Mystiska Edition • 2099 Edition • Runs 100% client-side</div>
+</header>
 
-<textarea id="txt" placeholder="Exempel: 
-Grattis! Du har vunnit 1 000 000 kr! Klicka här för att hämta ditt pris →"></textarea>
+<div class="container">
 
-<button id="btn">Klassificera</button>
+  <div class="card">
+    <h2>Phase 1 – Load Neural Net</h2>
+    <p>Laddar spam/ham-nätverket från tfjs_model/ – ingen data lämnar din maskin.</p>
 
-<div id="result">Väntar på text…</div>
+    <button class="btn" id="loadBtn">► INITIERA NEURONER</button>
 
-<div id="debug">Debug-loggar:</div>
+    <div id="status" style="margin-top:24px; font-size:1.3rem; min-height:2em;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Phase 2 – Intrusion Detection</h2>
+    <p>Klistra in misstänkt meddelande (engelska rekommenderas – modellen tränades på engelska SMS)</p>
+
+    <textarea id="input" placeholder="Exempel:
+CONGRATULATIONS! You are the lucky winner of £1,000,000!
+Text WIN to 12345 now to claim your prize!"></textarea>
+
+    <button class="btn" id="predictBtn" disabled>SCAN FOR MALICIOUS INTENT</button>
+
+    <div id="result"></div>
+  </div>
+
+  <div class="card" style="font-size:1.1rem; opacity:0.9;">
+    <details>
+      <summary>DEBUG CONSOLE [click to expand]</summary>
+      <pre id="debug"></pre>
+    </details>
+  </div>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 
@@ -93,110 +312,111 @@ const META_URL   = "https://raw.githubusercontent.com/mystiskahackaren/spamfilte
 let model = null;
 let wordIndex = null;
 let maxLen = 30;
-let oovToken = 1;
-const labels = ["ham", "spam"];
+let oov = 1;
+const labels = ["HAM", "SPAM"];
 
-const txt     = document.getElementById("txt");
-const btn     = document.getElementById("btn");
-const result  = document.getElementById("result");
-const debugEl = document.getElementById("debug");
+const loadBtn   = document.getElementById("loadBtn");
+const predictBtn= document.getElementById("predictBtn");
+const status    = document.getElementById("status");
+const input     = document.getElementById("input");
+const result    = document.getElementById("result");
+const debug     = document.getElementById("debug");
 
-function log(...args) {
-  const line = args.join(" ");
-  debugEl.innerHTML += line + "\n";
-  debugEl.scrollTop = debugEl.scrollHeight;
-  console.log("[debug]", line);
+function log(txt, err=false) {
+  const t = new Date().toLocaleTimeString();
+  debug.innerHTML += `<span style="color:${err?'#ff3366':'#00ff9d'}">[${t}] ${txt}</span>\n`;
+  debug.scrollTop = debug.scrollHeight;
 }
 
-log("Sidan startad", new Date().toLocaleTimeString());
+log("NEURAL INTERFACE ONLINE");
 
-// ────────────────────────────────────────────────
-async function loadMetadata() {
-  log("→ Laddar metadata...");
+async function loadAll() {
+  loadBtn.disabled = true;
+  status.innerHTML = "↓ INITIALIZING NEURAL CORE ↓";
+
   try {
-    const r = await fetch(META_URL);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const data = await r.json();
-    
-    wordIndex = data.word_index;
-    maxLen    = data.max_length ?? 30;
-    oovToken  = data.word_index?.[data.oov_token] ?? 1;
+    // metadata
+    log("Fetching vocabulary matrix...");
+    const mr = await fetch(META_URL);
+    const meta = await mr.json();
+    wordIndex = meta.word_index;
+    maxLen = meta.max_length || 30;
+    oov = wordIndex[meta.oov_token] || 1;
+    log(`Vocab loaded – ${Object.keys(wordIndex).length} tokens`);
 
-    log(`  Vocab-storlek: ${Object.keys(wordIndex).length}`);
-    log(`  max_length: ${maxLen}`);
-    log(`  OOV-token: ${oovToken}`);
-  } catch (err) {
-    log("Metadata-fel:", err.message);
-    throw err;
-  }
-}
-
-// ────────────────────────────────────────────────
-async function loadModel() {
-  log("→ Laddar modell...");
-  try {
+    // model
+    log("Loading synaptic weights...");
     model = await tf.loadLayersModel(MODEL_URL);
-    log("  Modell laddad ✓");
-    log("  Input shape:", model.inputs[0].shape.join(", "));
-  } catch (err) {
-    log("Modell-fel:", err.message);
-    throw err;
+    log("Model weights integrated – ready for inference");
+
+    status.innerHTML = "CORE ACTIVE – AWAITING INPUT";
+    predictBtn.disabled = false;
+    loadBtn.textContent = "NEURAL CORE ACTIVE ✓";
+    loadBtn.style.background = "linear-gradient(45deg, #00ff9d, #00f0ff)";
+  } catch(e) {
+    log("CRITICAL FAILURE: " + e.message, true);
+    status.innerHTML = "SYSTEM ERROR – CHECK DEBUG CONSOLE";
   }
 }
 
-// ────────────────────────────────────────────────
-async function predict() {
-  const text = txt.value.trim();
-  if (!text) {
-    result.textContent = "Skriv något först…";
+async function classify() {
+  const txt = input.value.trim();
+  if (!txt) {
+    result.innerHTML = "NO SIGNAL DETECTED";
     result.className = "";
     return;
   }
 
-  btn.disabled = true;
-  result.textContent = "Bearbetar…";
+  predictBtn.disabled = true;
+  result.innerHTML = "SCANNING PACKET...";
   result.className = "loading";
 
   try {
-    if (!wordIndex) await loadMetadata();
-    if (!model)    await loadModel();
+    if (!model) await loadAll();
 
-    // enkel tokenisering + post-padding
-    const tokens = text.toLowerCase()
+    // tokenisera (samma logik som tidigare)
+    const tokens = txt.toLowerCase()
       .replace(/[^\w\s]/g, " ")
       .split(/\s+/)
-      .map(w => wordIndex[w] ?? oovToken)
+      .map(w => wordIndex[w] ?? oov)
       .slice(0, maxLen);
 
     while (tokens.length < maxLen) tokens.push(0);
 
-    const input = tf.tensor2d([tokens], [1, maxLen]);
-    const out = model.predict(input);
-    const prob = (await out.data())[0];   // sigmoid → [0,1]
+    const tensor = tf.tensor2d([tokens], [1, maxLen]);
+    const pred = model.predict(tensor);
+    const score = (await pred.data())[0];
+    const isSpam = score > 0.5;
 
-    const isSpam = prob > 0.5;
-    const label = isSpam ? "SPAM" : "HAM";
-    const pct = (prob * 100).toFixed(1);
-
-    result.innerHTML = `${label}<br><small>Spam-sannolikhet: ${pct} %</small>`;
+    result.innerHTML = `
+      <div style="font-size:3.2rem; font-weight:900; letter-spacing:4px;">
+        ${isSpam ? "SPAM DETECTED" : "CLEAN TRANSMISSION"}
+      </div>
+      <div style="margin-top:12px; font-size:1.6rem; opacity:0.9;">
+        Confidence: ${(score*100).toFixed(1)}% ${isSpam?"MALICIOUS":"BENIGN"}
+      </div>
+    `;
     result.className = isSpam ? "spam" : "ham";
 
-    input.dispose();
-    out.dispose();
+    tensor.dispose();
+    pred.dispose();
 
-  } catch (err) {
-    result.textContent = "Fel – se debug-loggen nedan";
+  } catch(e) {
+    result.innerHTML = "NEURAL CRASH – SEE DEBUG";
     result.className = "";
-    log("PREDIKTIONSFEL:", err.message);
-    console.error(err);
+    log("INFERENCE ERROR: " + e.message, true);
   } finally {
-    btn.disabled = false;
+    predictBtn.disabled = false;
   }
 }
 
-// ────────────────────────────────────────────────
-btn.addEventListener("click", predict);
-</script>
+loadBtn.onclick  = loadAll;
+predictBtn.onclick = classify;
 
+// auto-ladda vid start om man vill (valfritt)
+window.addEventListener("load", () => {
+  // loadAll();   ← uncomment om du vill att den laddar automatiskt
+});
+</script>
 </body>
 </html>
